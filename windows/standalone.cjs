@@ -3,13 +3,16 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
 const { randomBytes } = require('node:crypto');
-const { serverCommand } = require('./config.cjs');
-const state = process.env.TAKT_SERVER_STATE || path.join(process.env.LOCALAPPDATA || process.env.HOME, 'TAKT-Pi-Server');
+const { serverCommand, serverURL } = require('./config.cjs');
+const stateArgument = process.argv.indexOf('--state');
+const state = stateArgument >= 0 ? process.argv[stateArgument + 1] : process.env.TAKT_SERVER_STATE || path.join(process.env.ProgramData || process.env.LOCALAPPDATA || process.env.HOME, 'TAKT-Pi-Server');
+if (!state || !path.isAbsolute(state)) throw new Error('State directory must be absolute');
 const configFile = path.join(state, 'server.json');
 function validate(c) {
   if (!Number.isInteger(c.port) || c.port < 1024 || c.port > 65535) throw new Error('Invalid fixed port');
   if (typeof c.password !== 'string' || c.password.length < 16) throw new Error('Password must have at least 16 characters');
   if (!path.isAbsolute(c.directory) || !path.isAbsolute(c.agentDirectory)) throw new Error('Backend and agent directories must be absolute');
+  if (c.publicURL && !serverURL(c.publicURL).startsWith('https://')) throw new Error('Public URL must use HTTPS');
   return c;
 }
 function initialize() {
@@ -28,6 +31,8 @@ function launch(c) {
   fs.mkdirSync(path.join(state, 'logs'), { recursive: true });
   const command = serverCommand(c.directory);
   const env = { ...process.env, PORT: String(c.port), HOSTNAME: '127.0.0.1', PI_WEB_PASSWORD: c.password, PI_CODING_AGENT_DIR: c.agentDirectory, NODE_ENV: 'production', NEXT_TELEMETRY_DISABLED: '1' };
+  // pi-web rejects unknown Host headers before authentication; trust only our public host.
+  if (c.publicURL) env.PI_WEB_HOSTNAME = new URL(c.publicURL).host;
   env.PATH = path.dirname(c.node) + path.delimiter + (env.PATH || '');
   if (command.dist) env.PI_WEB_DIST_DIR = command.dist;
   const children = new Set();

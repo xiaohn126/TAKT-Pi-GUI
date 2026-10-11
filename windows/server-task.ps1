@@ -1,7 +1,7 @@
 param(
   [ValidateSet('Install','Remove','Start','Stop','Status')][string]$Action = 'Status',
   [ValidateSet('Boot','Logon')][string]$Startup = 'Boot',
-  [string]$StateDirectory = (Join-Path $env:LOCALAPPDATA 'TAKT-Pi-Server')
+  [string]$StateDirectory = (Join-Path $env:ProgramData 'TAKT-Pi-Server')
 )
 $ErrorActionPreference = 'Stop'
 $taskName = 'TAKT-Pi-Server'
@@ -12,19 +12,12 @@ if ($Action -eq 'Install') {
   if ($LASTEXITCODE) { throw 'Server configuration check failed' }
   $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
   if ($Startup -eq 'Boot' -and !([Security.Principal.WindowsPrincipal]$identity).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) { throw 'Boot installation requires an elevated PowerShell. Use -Startup Logon for current-user sign-in startup.' }
-  # Retain the user profile's inherited ACLs, including restricted execution identities.
-  & icacls.exe $StateDirectory /grant:r "*$($identity.User.Value):(OI)(CI)F" '*S-1-5-18:(OI)(CI)F' /T /Q | Out-Null
+  # Machine state contains model keys and tunnel credentials; exclude general local users.
+  & icacls.exe $StateDirectory /inheritance:r /grant:r "*$($identity.User.Value):(OI)(CI)F" '*S-1-5-18:(OI)(CI)F' '*S-1-5-32-544:(OI)(CI)F' /T /Q | Out-Null
   if ($LASTEXITCODE) { throw 'Could not protect the private state directory' }
-  $runner = Join-Path $StateDirectory 'run.ps1'
-  $escapedState = $StateDirectory.Replace("'", "''")
-  $escapedNode = $config.node.Replace("'", "''")
-  $escapedScript = (Join-Path $PSScriptRoot 'standalone.cjs').Replace("'", "''")
-  @"
-`$env:TAKT_SERVER_STATE = '$escapedState'
-& '$escapedNode' '$escapedScript'
-exit `$LASTEXITCODE
-"@ | Set-Content -LiteralPath $runner -Encoding UTF8
-  $taskAction = New-ScheduledTaskAction -Execute "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$runner`"" -WorkingDirectory $PSScriptRoot
+  # Launch Node directly; background S4U tasks must not rely on PowerShell console startup.
+  $serverScript = Join-Path $PSScriptRoot 'standalone.cjs'
+  $taskAction = New-ScheduledTaskAction -Execute $config.node -Argument "`"$serverScript`" --state `"$StateDirectory`"" -WorkingDirectory $PSScriptRoot
   if ($Startup -eq 'Boot') {
     $trigger = New-ScheduledTaskTrigger -AtStartup
     $principal = New-ScheduledTaskPrincipal -UserId $identity.Name -LogonType S4U -RunLevel Limited
