@@ -1,0 +1,7 @@
+# Copy to the private state directory and replace UUID/path; never commit credentials.
+tunnel: YOUR-TUNNEL-UUID
+credentials-file: 'C:\Users\YOUR-USER\.cloudflared\YOUR-TUNNEL-UUID.json'
+ingress:
+  - hostname: pi.xiao-dev.top
+    service: http://127.0.0.1:30141
+  - service: http_status:404
