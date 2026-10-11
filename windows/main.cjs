@@ -5,6 +5,7 @@ const net = require('node:net');
 const { spawn } = require('node:child_process');
 const { randomBytes } = require('node:crypto');
 const { serverURL, serverCommand } = require('./config.cjs');
+const { configureProvider } = require('./provider.cjs');
 let win, child, origin, stopping = false;
 const setup = () => win.loadFile(path.join(__dirname, 'index.html'));
 function trusted(event) {
@@ -27,6 +28,15 @@ async function freePort() {
 }
 async function connect(options) {
   stop(); origin = null;
+  let saved = { ...options };
+  let agentDir;
+  if (options.mode === 'bundled') {
+    agentDir = path.join(app.getPath('userData'), 'agent');
+    const provider = configureProvider(agentDir, options);
+    saved = { mode: 'bundled', ...provider };
+    const resources = app.isPackaged || fs.existsSync(path.join(process.resourcesPath, 'node.exe')) ? process.resourcesPath : path.join(__dirname, 'runtime', 'delivery');
+    options = { mode: 'local', directory: path.join(resources, 'package'), node: path.join(resources, 'node.exe') };
+  }
   let target;
   if (options.mode === 'local') {
     const command = serverCommand(options.directory);
@@ -35,6 +45,8 @@ async function connect(options) {
     const logPath = path.join(app.getPath('userData'), 'sidecar.log');
     const log = fs.createWriteStream(logPath, { flags: 'a' });
     const env = { ...process.env, PORT: String(port), HOSTNAME: '127.0.0.1', PI_WEB_PASSWORD: password, NODE_ENV: 'production', NEXT_TELEMETRY_DISABLED: '1' };
+    if (agentDir) env.PI_CODING_AGENT_DIR = agentDir;
+    env.PATH = path.dirname(options.node || process.execPath) + path.delimiter + (env.PATH || '');
     if (command.dist) env.PI_WEB_DIST_DIR = command.dist;
     const args = command.dist ? [...command.args, '-p', String(port)] : command.args;
     const proc = spawn(options.node || 'node', args, { cwd: command.cwd, env, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
@@ -57,7 +69,8 @@ async function connect(options) {
   } else if (options.mode === 'remote') target = serverURL(options.url);
   else throw new Error('无效的连接方式');
   origin = target;
-  fs.writeFileSync(path.join(app.getPath('userData'), 'connection.json'), JSON.stringify(options, null, 2));
+  delete saved.apiKey;
+  fs.writeFileSync(path.join(app.getPath('userData'), 'connection.json'), JSON.stringify(saved, null, 2));
   await win.loadURL(target);
 }
 if (!app.requestSingleInstanceLock()) app.quit();
@@ -82,7 +95,14 @@ else {
     ipcMain.handle('directory', async event => { if (!trusted(event)) return; const r = await dialog.showOpenDialog(win, { properties: ['openDirectory'] }); return r.filePaths[0]; });
     ipcMain.handle('settings', event => { if (!trusted(event)) return {}; try { return JSON.parse(fs.readFileSync(path.join(app.getPath('userData'), 'connection.json'), 'utf8')); } catch { return {}; } });
     Menu.setApplicationMenu(Menu.buildFromTemplate([{ label: 'TAKT', submenu: [{ label: '连接设置', accelerator: 'Ctrl+Shift+C', click: () => { stop(); origin = null; setup(); } }, { label: '打开日志目录', click: () => shell.openPath(app.getPath('userData')) }, { role: 'quit' }] }, { role: 'editMenu' }, { role: 'viewMenu' }]));
-    setup();
+    setup().then(async () => {
+      try {
+        const saved = JSON.parse(fs.readFileSync(path.join(app.getPath('userData'), 'connection.json'), 'utf8'));
+        if (saved.mode === 'bundled') await connect(saved);
+      } catch (error) {
+        if (error.code !== 'ENOENT') { stop(); origin = null; await setup(); dialog.showErrorBox('启动失败', error.message); }
+      }
+    });
   });
   app.on('before-quit', () => { stopping = true; stop(); });
   app.on('window-all-closed', () => app.quit());

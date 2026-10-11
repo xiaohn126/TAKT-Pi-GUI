@@ -2,19 +2,22 @@
 const { app, BrowserWindow } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
-app.setPath('userData', path.join(process.env.APPDATA, 'TAKT Pi GUI'));
+app.disableHardwareAcceleration();
+app.setPath('userData', process.env.TAKT_TEST_USER_DATA || path.join(process.env.APPDATA, 'TAKT Pi GUI'));
 require(process.env.TAKT_TEST_MAIN || '../main.cjs');
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 app.whenReady().then(async () => {
-  const output = path.resolve(__dirname, '../../dist/windows/live-result.json');
+  const output = process.env.TAKT_TEST_RESULT || path.resolve(__dirname, '../../dist/windows/live-result.json');
   try {
     const win = BrowserWindow.getAllWindows()[0];
     while (!win.webContents.getURL().endsWith('index.html')) await delay(100);
     await delay(500);
-    const settings = await win.webContents.executeJavaScript('window.takt.settings()');
-    if (settings.mode !== 'local') throw new Error('Packaged setup IPC did not load local settings');
-    await win.webContents.executeJavaScript(`void window.takt.connect(${JSON.stringify(settings)})`);
+    const settings = process.env.TAKT_TEST_CONFIG ? JSON.parse(fs.readFileSync(process.env.TAKT_TEST_CONFIG, 'utf8')) : await win.webContents.executeJavaScript('window.takt.settings()');
+    if (!process.env.TAKT_TEST_CONFIG && settings.mode !== 'local') throw new Error('Packaged setup IPC did not load local settings');
+    await win.webContents.executeJavaScript(`void window.takt.connect(${JSON.stringify(settings)}).then(r => { if (r?.error) document.getElementById('error').textContent = r.error; })`);
     for (let i = 0; !win.webContents.getURL().startsWith('http:'); i++) {
+      const error = await win.webContents.executeJavaScript('document.getElementById("error")?.textContent');
+      if (error) throw new Error(error);
       if (i > 180) throw new Error('Local connection timed out');
       await delay(500);
     }
@@ -44,9 +47,11 @@ app.whenReady().then(async () => {
       if (!r.ok) throw new Error(`${route}: HTTP ${r.status}: ${data.error || 'failed'}`);
       return data;
     };
-    const first = await request('POST', '/api/agent/new', { cwd: path.resolve(__dirname, '../..'), type: 'prompt', message: '记住测试数字 73462。只回复 TAKT_DESKTOP_CHAT_OK，不使用工具。', provider: 'vanyo', modelId: 'claude-sonnet-5', toolNames: [] });
+    const provider = process.env.TAKT_TEST_PROVIDER || 'vanyo';
+    const modelId = process.env.TAKT_TEST_MODEL || 'claude-sonnet-5';
+    const first = await request('POST', '/api/agent/new', { cwd: path.resolve(__dirname, '../..'), type: 'prompt', message: '记住测试数字 73462。只回复 TAKT_DESKTOP_CHAT_OK，不使用工具。', provider, modelId, toolNames: [] });
     const waitReply = async expected => {
-      for (let i = 0; i < 120; i++) {
+      for (let i = 0; i < 360; i++) {
         const data = await request('GET', `/api/sessions/${first.sessionId}`);
         const state = await request('GET', `/api/agent/${first.sessionId}`);
         if (!state.state?.isStreaming && (data.context?.messages || []).some(message => message.role === 'assistant' && JSON.stringify(message.content).includes(expected))) return;
@@ -73,7 +78,12 @@ app.whenReady().then(async () => {
     await request('DELETE', `/api/terminal/${terminal.id}`);
     const closed = await win.webContents.session.fetch(base + `/api/terminal/${terminal.id}`);
     if (closed.status !== 404) throw new Error('Terminal was not closed');
-    fs.writeFileSync(output, JSON.stringify({ setupIPC: true, localAuthentication: true, model: 'vanyo/claude-sonnet-5', sessionId: first.sessionId, firstReply: true, contextReply: true, terminalOutput: 'TAKT_DESKTOP_Windows_NT', resize: true, close: true }, null, 2));
+    await win.loadURL(base + '/?session=' + encodeURIComponent(first.sessionId)); await delay(3000);
+    const rendered = await win.webContents.executeJavaScript(`document.body.innerText.includes('TAKT_DESKTOP_CHAT_OK') && document.body.innerText.includes('73462') && document.body.innerText.includes(${JSON.stringify(modelId)})`);
+    if (!rendered) throw new Error('Chat replies/model were not rendered in the desktop window');
+    let screenshot = true;
+    try { fs.writeFileSync(path.join(path.dirname(output), 'delivery-chat.png'), (await win.webContents.capturePage()).toPNG()); } catch { screenshot = false; }
+    fs.writeFileSync(output, JSON.stringify({ setupIPC: true, localAuthentication: true, model: provider + '/' + modelId, sessionId: first.sessionId, firstReply: true, contextReply: true, rendered, terminalOutput: 'TAKT_DESKTOP_Windows_NT', resize: true, close: true, screenshot }, null, 2));
     console.log('Live desktop validation passed');
     // Keep the tested client and its local service running for the user.
   } catch (error) { fs.writeFileSync(output, JSON.stringify({ error: error.message })); console.error(error.message); app.quit(); }

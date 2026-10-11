@@ -1,17 +1,20 @@
 const { app, BrowserWindow } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
-require('../main.cjs');
+app.disableHardwareAcceleration();
+if (process.env.TAKT_TEST_USER_DATA) app.setPath('userData', process.env.TAKT_TEST_USER_DATA);
+require(process.env.TAKT_TEST_MAIN || '../main.cjs');
 app.whenReady().then(async () => {
   try {
     const win = BrowserWindow.getAllWindows()[0];
     await new Promise(resolve => win.webContents.once('did-finish-load', resolve));
     const state = await win.webContents.executeJavaScript('({title:document.title, bridge:typeof window.takt.connect, node:typeof require, button:document.getElementById("connect").textContent})');
     if (state.bridge !== 'function' || state.node !== 'undefined' || state.button !== '连接') throw new Error(JSON.stringify(state));
-    const image = await win.webContents.capturePage();
     const output = path.resolve(__dirname, '../../dist/windows');
     fs.mkdirSync(output, { recursive: true });
-    fs.writeFileSync(path.join(output, 'startup.png'), image.toPNG());
+    let screenshot = false;
+    try { fs.writeFileSync(path.join(output, 'startup.png'), (await win.webContents.capturePage()).toPNG()); screenshot = true; }
+    catch { console.warn('Startup capture unavailable; continuing functional IPC checks'); }
     const http = require('node:http');
     const server = http.createServer((req, res) => {
       res.setHeader('Content-Type', 'text/html');
@@ -27,7 +30,7 @@ app.whenReady().then(async () => {
     if (JSON.stringify(exposed) !== '{}') throw new Error('Remote page gained setup IPC access');
     await new Promise(resolve => server.close(resolve));
     console.log('Windows startup verified:', JSON.stringify(state));
-    fs.writeFileSync(path.join(output, 'smoke-result.json'), JSON.stringify({ startup: state, remoteNavigation: true, remoteIPCBlocked: true }));
+    fs.writeFileSync(path.join(output, 'smoke-result.json'), JSON.stringify({ startup: state, remoteNavigation: true, remoteIPCBlocked: true, screenshot }));
     app.exit(0);
   } catch (error) { console.error(error); app.exit(1); }
 });

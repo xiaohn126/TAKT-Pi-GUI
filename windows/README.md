@@ -1,47 +1,41 @@
-# Windows 11 desktop client
+# Windows 11 delivery
 
-Version 0.3.0 · Build date 2026-10-11
+Version 0.4.0 · Build date 2026-10-11 · Windows x64
 
-Desktop styling follows the macOS client's implemented palette, orange accent, centered 760px chat column, soft sidebar and rounded composer. Windows caption controls remain native. Press Alt to reveal the menu, F11 to toggle fullscreen. The server's browser UI is unchanged. This is visual styling, not a SwiftUI port or exact native-material reproduction.
+## Install and use
 
-Windows uses an Electron window displaying the existing pi-web UI. The macOS SwiftUI client is retained. This is a separate frontend, not a Windows build of SwiftUI; feature availability follows the connected pi-web version.
+Run `TAKT-Pi-GUI-Setup-0.4.0-x64.exe`, complete the per-user installation wizard, then open TAKT Pi GUI from the desktop or Start menu. A portable executable is also provided.
 
-## Run
+The package includes Node.js 22.22.2, production pi-web 0.11.1, pi coding agent and Windows PTY dependencies. No separate Node.js, pi, npm or WSL installation is needed. Git for Windows and external development tools are needed only for projects using them.
 
-Open `dist/windows/TAKT-Pi-GUI-0.3.0-win-x64.exe`. No Electron/Node installation is required for remote mode. Enter the root URL of a running pi-web server, then sign in on its login page. Use HTTPS for a remote server. OAuth links open in the default browser.
+On first launch, select the recommended local mode and enter your own OpenAI Chat Completions compatible API URL, API Key, available model IDs and default model. VanYo uses `https://api.vanyospace.com/v1` and models permitted by your key group. Do not mix different keys' model groups in one configuration. Subsequent launches start the saved local service automatically. Custom local/remote modes remain available.
 
-For local mode, install Node.js 22.19+ and Git for Windows, configure the pi CLI and provider credentials, and prepare the same server used by the Mac app:
+No developer keys, chats or configuration files are bundled. Users supply their own account and credit. Model limits default to conservative 128k context / 4096 output; advanced capabilities can be adjusted in the local agent configuration.
 
-```powershell
-git clone https://github.com/willwill85/pi-web.git pi-web-custom
-cd pi-web-custom
-npm install
-npm run build
-```
+Ctrl+Shift+C changes settings; a blank API Key field retains the saved key. Credentials and sessions are under `%APPDATA%\TAKT Pi GUI\agent`. Keys are local JSON, not an encrypted credential vault. Uninstall retains data. Connection and log files are under `%APPDATA%\TAKT Pi GUI`. Alt reveals the menu; F11 toggles fullscreen; Escape exits fullscreen.
 
-Select that built directory in the app and, if needed, the full path to `node.exe`. The client starts the server on loopback with a random port and password, authenticates using `/api/web-auth`, and stops its process tree on normal exit or when changing connection. Windows compatibility of terminal/agent tools depends on the server and installed shell; the desktop package does not bundle pi-web, pi CLI, or their native modules. No WSL is needed for the desktop client.
+The package is unsigned: Windows may show an unknown publisher/SmartScreen prompt. Code signing requires a publisher certificate. Automatic updates are not included.
 
-Ctrl+Shift+C returns to connection settings. The menu opens the log directory. Connection settings and `sidecar.log` are stored in Electron's per-user application data directory; passwords are not saved. A failed local server requires reconnecting. After a forced process termination, check for an orphan server before starting another session in the same directory.
-
-## Build and verify
+## Rebuild
 
 ```powershell
 cd windows
 npm ci
 npm test
-npx electron test/smoke.cjs
+npm run prepare:delivery
 npm run dist
 ```
 
-The output is an unsigned x64 portable executable in `dist/windows`; Windows may display an unknown publisher prompt. Source dependencies are pinned in `package-lock.json`. The application renderer uses sandboxing, context isolation, no Node integration, restricted navigation and no remote IPC access. See [Electron security guidance](https://www.electronjs.org/docs/latest/tutorial/security).
+Preparation downloads the pinned official backend, checks SHA-512, installs `server-package-lock.json` dependencies, includes licenses and copies the pinned Node runtime. It never copies local pi configuration. Prebuilt production assets avoid the previous Windows source-build tracing failure. Outputs are in `dist/windows`.
 
-## Directory structure
+## Structure
 
-- `main.cjs`: desktop lifecycle, connection, local server supervision.
-- `desktop.css`: macOS-inspired colors, typography and component styling.
-- `config.cjs`: URL validation and server discovery.
-- `index.html`, `setup.cjs`, `preload.cjs`: connection UI and limited setup bridge.
-- `test/`: configuration regression tests and real Electron startup capture.
-- `package.json`, `package-lock.json`: version, build date, dependencies and packaging.
+- `main.cjs`, `preload.cjs`: window, sandboxed bridge, service lifecycle.
+- `index.html`, `setup.cjs`, `desktop.css`: onboarding and desktop styling.
+- `config.cjs`, `provider.cjs`: connection and per-user provider configuration.
+- `prepare-delivery.ps1`, `backend-config.cjs`, `server-package-lock.json`: production staging.
+- `package.json`, `package-lock.json`: app metadata, build dependencies, NSIS/portable packaging.
+- `test/`: unit, startup and opt-in model/terminal checks.
+- `runtime/`: ignored staging/test files; only explicitly selected production resources are packaged.
 
-Validation of startup and packaging does not establish live model authentication, streamed replies, terminal execution, or remote-pi behavior. Test those against your configured server.
+See [user instructions](../docs/07-windows-delivery.md) and [logbook](../docs/06-windows.md).

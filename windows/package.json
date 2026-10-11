@@ -1,7 +1,7 @@
 {
   "name": "takt-pi-gui-windows",
   "productName": "TAKT Pi GUI",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "buildDate": "2026-10-11",
   "description": "Windows desktop client for pi-web",
   "author": "TAKT Pi GUI contributors",
@@ -11,7 +11,8 @@
     "start": "electron .",
     "test": "node --test test/*.test.cjs",
     "pack": "electron-builder --win --dir",
-    "dist": "electron-builder --win portable"
+    "dist": "electron-builder --win",
+    "prepare:delivery": "powershell -NoProfile -ExecutionPolicy Bypass -File prepare-delivery.ps1"
   },
   "devDependencies": {
     "electron": "44.7.0",
@@ -24,17 +25,61 @@
       "output": "../dist/windows"
     },
     "files": [
-      "*.cjs",
-      "*.html",
-      "*.css",
+      "main.cjs",
+      "preload.cjs",
+      "config.cjs",
+      "provider.cjs",
+      "setup.cjs",
+      "index.html",
+      "desktop.css",
       "package.json"
     ],
     "win": {
       "target": [
+        "nsis",
         "portable"
       ],
       "signAndEditExecutable": false
     },
-    "artifactName": "TAKT-Pi-GUI-${version}-win-${arch}.${ext}"
+    "artifactName": "TAKT-Pi-GUI-${version}-win-${arch}.${ext}",
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "artifactName": "TAKT-Pi-GUI-Setup-${version}-${arch}.exe",
+      "deleteAppDataOnUninstall": false
+    },
+    "extraResources": [
+      {
+        "to": "node.exe",
+        "from": "runtime/delivery/node.exe"
+      },
+      {
+        "to": "package",
+        "from": "runtime/delivery/package",
+        "filter": [
+          "**/*",
+          "!package-lock.json",
+          "!node_modules/.cache/**/*",
+          "!.next/cache/**/*",
+          "!**/*.map"
+        ]
+      },
+      {
+        "to": "THIRD-PARTY-NOTICES.txt",
+        "from": "runtime/delivery/THIRD-PARTY-NOTICES.txt"
+      },
+      {
+        "from": "runtime/delivery/package/node_modules",
+        "to": "package/node_modules",
+        "filter": [
+          "**/*",
+          "!**/*.map",
+          "!**/.cache/**/*"
+        ]
+      }
+    ]
   }
 }

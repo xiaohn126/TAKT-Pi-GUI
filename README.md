@@ -62,7 +62,7 @@ Rows marked "no" use the server's official-provider code, which is unit-tested a
 
 ### Windows 11
 
-A Windows desktop client is available in [windows/](windows/README.md), version 0.2.0 (2026-10-11). It uses the pi-web UI in an Electron desktop window, with remote and local-server modes. Build a portable `.exe` with `cd windows`, `npm ci`, then `npm run dist`; output is in `dist/windows`. Remote mode needs no separately installed Node.js. Local mode requires a built pi-web server and Node.js 22.19+.
+Windows version 0.4.0 (2026-10-11) provides an installation wizard and portable `.exe`, bundling production pi-web, Node.js, pi agent and Windows terminal dependencies. Install, enter your own API Key and model configuration, then connect; no separate pi/Node/npm/WSL setup is required. The Electron frontend follows the macOS visual style. See [user instructions](docs/07-windows-delivery.md) and [build instructions](windows/README.md). Outputs are in `dist/windows`; Git/project development tools are optional external dependencies.
 
 ### macOS
 
@@ -108,7 +108,7 @@ Early (0.x). Daily-usable for chat, files, review, terminal and settings; expect
 ## Documentation
 
 [Overview](docs/00-overview.md) · [Architecture](docs/01-architecture.md) · [Feature parity with pi-web](docs/02-feature-parity.md) ·
-[UI spec](docs/03-ui-spec-codex.md) · [Roadmap](docs/04-roadmap.md) · [remote-pi](docs/05-remote-pi.md)
+[UI spec](docs/03-ui-spec-codex.md) · [Roadmap](docs/04-roadmap.md) · [remote-pi](docs/05-remote-pi.md) · [Windows logbook](docs/06-windows.md) · [Windows installation](docs/07-windows-delivery.md)
 
 ## Credits and license
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.0 · 2026-10-11
+- Added per-user NSIS installer and self-contained portable Windows distribution, bundling production pi-web, Node.js, pi agent and Windows terminal dependencies.
+- Added first-run API/model configuration and automatic startup with isolated per-user agent data. Personal developer credentials are excluded from packaging.
+- Added pinned backend preparation, license notices, user documentation and provider configuration tests.
+
 ## 0.3.0 · 2026-10-11
 - Windows desktop styling mirrors the macOS palette, orange accent, 760px chat column and rounded composer; an integrated draggable title bar retains Windows caption controls.
 - Fixed packaged setup IPC path validation. Live desktop checks verified VanYo replies, multi-turn context and terminal output/resize/close.
