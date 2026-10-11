@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.0 · 2026-10-11
+- Windows desktop styling mirrors the macOS palette, orange accent, 760px chat column and rounded composer; an integrated draggable title bar retains Windows caption controls.
+- Fixed packaged setup IPC path validation. Live desktop checks verified VanYo replies, multi-turn context and terminal output/resize/close.
+
 ## 0.2.0 · 2026-10-11
 - Added Windows 11 Electron client, remote/local connection setup, server lifecycle, startup tests and portable x64 packaging. See `windows/README.md`.
 

@@ -7,7 +7,15 @@ const { randomBytes } = require('node:crypto');
 const { serverURL, serverCommand } = require('./config.cjs');
 let win, child, origin, stopping = false;
 const setup = () => win.loadFile(path.join(__dirname, 'index.html'));
-function trusted(event) { return event.sender === win.webContents && event.senderFrame.url === require('node:url').pathToFileURL(path.join(__dirname, 'index.html')).href; }
+function trusted(event) {
+  if (event.sender !== win.webContents || event.senderFrame !== win.webContents.mainFrame) return false;
+  try {
+    // Portable executables may use an 8.3 TEMP path while Chromium normalizes it.
+    const actual = fs.realpathSync(require('node:url').fileURLToPath(event.senderFrame.url));
+    const expected = fs.realpathSync(path.join(__dirname, 'index.html'));
+    return process.platform === 'win32' ? actual.toLowerCase() === expected.toLowerCase() : actual === expected;
+  } catch { return false; }
+}
 function stop() {
   if (!child) return;
   const proc = child; child = null;
@@ -56,7 +64,16 @@ if (!app.requestSingleInstanceLock()) app.quit();
 else {
   app.on('second-instance', () => { if (win) { win.restore(); win.focus(); } });
   app.whenReady().then(() => {
-    win = new BrowserWindow({ width: 1440, height: 940, minWidth: 800, minHeight: 600, title: 'TAKT Pi GUI', webPreferences: { preload: path.join(__dirname, 'preload.cjs'), nodeIntegration: false, contextIsolation: true, sandbox: true, partition: 'takt-session' } });
+    win = new BrowserWindow({ width: 1440, height: 940, minWidth: 960, minHeight: 640, title: 'TAKT Pi GUI', titleBarStyle: 'hidden', titleBarOverlay: { color: '#ffffff', symbolColor: '#69696f', height: 36 }, autoHideMenuBar: true, webPreferences: { preload: path.join(__dirname, 'preload.cjs'), nodeIntegration: false, contextIsolation: true, sandbox: true, partition: 'takt-session' } });
+    win.webContents.on('did-finish-load', async () => {
+      try { await win.webContents.insertCSS(fs.readFileSync(path.join(__dirname, 'desktop.css'), 'utf8')); } catch (error) { console.warn('Desktop theme could not load:', error.message); }
+    });
+    ipcMain.on('desktop-theme', (event, dark) => {
+      if (event.sender === win.webContents && typeof dark === 'boolean') win.setTitleBarOverlay({ color: dark ? '#1c1c1e' : '#ffffff', symbolColor: dark ? '#aaaab2' : '#69696f', height: 36 });
+    });
+    win.webContents.on('before-input-event', (event, input) => {
+      if (input.type === 'keyDown' && input.key === 'Escape' && win.isFullScreen()) { event.preventDefault(); win.setFullScreen(false); }
+    });
     win.webContents.on('will-navigate', (event, url) => { if (!origin || new URL(url).origin !== origin) event.preventDefault(); });
     win.webContents.on('will-redirect', (event, url) => { if (!origin || new URL(url).origin !== origin) event.preventDefault(); });
     win.webContents.setWindowOpenHandler(({ url }) => { if (url.startsWith('https://') || url.startsWith('http://')) shell.openExternal(url); return { action: 'deny' }; });

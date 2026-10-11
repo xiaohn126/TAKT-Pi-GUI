@@ -1,0 +1,50 @@
+/* Design values mirrored from Sources/PiNative/Theme/Theme.swift. */
+:root, html[data-theme] {
+ --bg:#fff!important; --bg-panel:#f4f4f5!important; --bg-hover:#ebebed!important;
+ --bg-selected:rgba(0,0,0,.09)!important; --border:rgba(0,0,0,.09)!important;
+ --text:#202024!important; --text-muted:#69696f!important; --text-dim:#77777e!important;
+ --accent:#ff6b3d!important; --accent-hover:#e9582c!important; --accent-contrast:#fff!important;
+ --user-bg:#f4f4f5!important; --assistant-bg:#fff!important; --tool-bg:#f6f6f7!important;
+ --bg-subtle:rgba(0,0,0,.03)!important; --chat-content-max-width:760px!important;
+ --chat-content-font-size:14px!important;
+ --font-ui:'Segoe UI','Microsoft YaHei UI',sans-serif!important;
+}
+html.dark, html[data-theme="dark"], html[data-theme="forest"] {
+ --bg:#1c1c1e!important; --bg-panel:#2a2a2d!important; --bg-hover:#343437!important;
+ --bg-selected:rgba(255,255,255,.09)!important; --border:rgba(255,255,255,.09)!important;
+ --text:#efeff1!important; --text-muted:#aaaab2!important; --text-dim:#919199!important;
+ --user-bg:#2a2a2d!important; --assistant-bg:#1c1c1e!important; --tool-bg:#252528!important;
+ --bg-subtle:rgba(255,255,255,.04)!important;
+}
+body { background:var(--bg)!important; color:var(--text)!important; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Microsoft YaHei UI',sans-serif!important; font-size:14px; -webkit-font-smoothing:antialiased; }
+body.takt-desktop { padding-top:36px!important; height:100dvh; box-sizing:border-box; }
+body.takt-desktop .h-dvh, body.takt-desktop .h-screen { height:calc(100dvh - 36px)!important; }
+#takt-titlebar { position:fixed; inset:0 0 auto; height:36px; z-index:2147483640; display:flex; align-items:center; padding:0 160px 0 16px; background:var(--bg); color:var(--text-muted); border-bottom:1px solid var(--border); font:600 12px 'Segoe UI',sans-serif; letter-spacing:.2px; -webkit-app-region:drag; user-select:none; }
+#takt-titlebar::before { content:''; width:7px; height:7px; border-radius:50%; background:var(--accent); margin-right:8px; }
+.session-sidebar { background:color-mix(in srgb,var(--bg-panel) 88%,var(--bg))!important; border-right:1px solid var(--border); font-size:13px; }
+.sidebar-header { padding-top:12px!important; padding-bottom:10px!important; }
+.sidebar-tool-button,.sidebar-new-button,.sidebar-search-toggle,.sidebar-tab,.session-tree-row button,.sidebar-search-input { border-radius:8px!important; }
+.sidebar-new-button { color:var(--accent)!important; }
+.session-sidebar,.new-session-brand-name,.chat-content,.chat-input-shell { font-family:var(--font-ui)!important; }
+.sidebar-brand { font-size:0!important; font-family:var(--font-ui)!important; }
+.sidebar-brand::after { content:'TAKT'; font-size:14px; font-weight:600; }
+.sidebar-header button { border-color:transparent!important; }
+.chat-input-shell { padding-bottom:18px!important; }
+.chat-input-shell div:has(> .chat-input-textarea) { border-radius:20px!important; background:var(--bg-panel)!important; border:1px solid var(--border)!important; padding:14px 14px 12px!important; box-shadow:0 2px 8px rgba(0,0,0,.025)!important; }
+.chat-input-shell div:has(> .chat-input-textarea):focus-within { border-color:color-mix(in srgb,var(--accent) 48%,var(--border))!important; }
+.chat-input-controls { padding-top:8px!important; }
+.chat-input-shell div:has(> .chat-input-textarea)>button:last-child { width:34px!important; height:34px!important; padding:0!important; font-size:0!important; border-radius:50%!important; }
+.chat-input-shell div:has(> .chat-input-textarea)>button:last-child svg { transform:rotate(-90deg); }
+.chat-content div[style*="var(--user-bg)"] { border-radius:16px!important; border-color:var(--border)!important; padding:10px 14px!important; }
+.markdown-body { line-height:1.6; }
+.markdown-code-block,.tool-call-card,.extension-widget-panel { border-radius:12px!important; }
+.terminal-panel-header { background:var(--bg-panel)!important; border-color:var(--border)!important; }
+.new-session-brand-name { font-size:0!important; }
+.new-session-brand-name::after { content:'TAKT Pi GUI'; font-size:24px; font-weight:600; letter-spacing:-.6px; color:var(--text); }
+code,pre,.terminal-xterm { font-family:'Cascadia Code',Consolas,monospace; }
+button:focus-visible,input:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+body:has(#connect) input,body:has(#connect) select { background:var(--bg-panel)!important; color:var(--text)!important; border-color:var(--border)!important; border-radius:12px; }
+body:has(#connect) #connect { background:var(--accent)!important; border-color:transparent!important; color:white; border-radius:12px; }
+body:has(#connect) h1 { color:var(--text); letter-spacing:-.8px; }
+body:has(#connect) p,body:has(#connect) small { color:var(--text-muted); }
+@media(prefers-reduced-motion:reduce) { *,*::before,*::after { transition-duration:0s!important; animation-duration:0s!important; } }

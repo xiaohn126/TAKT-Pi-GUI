@@ -1,12 +1,14 @@
 # Windows 11 desktop client
 
-Version 0.2.0 · Build date 2026-10-11
+Version 0.3.0 · Build date 2026-10-11
+
+Desktop styling follows the macOS client's implemented palette, orange accent, centered 760px chat column, soft sidebar and rounded composer. Windows caption controls remain native. Press Alt to reveal the menu, F11 to toggle fullscreen. The server's browser UI is unchanged. This is visual styling, not a SwiftUI port or exact native-material reproduction.
 
 Windows uses an Electron window displaying the existing pi-web UI. The macOS SwiftUI client is retained. This is a separate frontend, not a Windows build of SwiftUI; feature availability follows the connected pi-web version.
 
 ## Run
 
-Open `dist/windows/TAKT-Pi-GUI-0.2.0-win-x64.exe`. No Electron/Node installation is required for remote mode. Enter the root URL of a running pi-web server, then sign in on its login page. Use HTTPS for a remote server. OAuth links open in the default browser.
+Open `dist/windows/TAKT-Pi-GUI-0.3.0-win-x64.exe`. No Electron/Node installation is required for remote mode. Enter the root URL of a running pi-web server, then sign in on its login page. Use HTTPS for a remote server. OAuth links open in the default browser.
 
 For local mode, install Node.js 22.19+ and Git for Windows, configure the pi CLI and provider credentials, and prepare the same server used by the Mac app:
 
@@ -36,6 +38,7 @@ The output is an unsigned x64 portable executable in `dist/windows`; Windows may
 ## Directory structure
 
 - `main.cjs`: desktop lifecycle, connection, local server supervision.
+- `desktop.css`: macOS-inspired colors, typography and component styling.
 - `config.cjs`: URL validation and server discovery.
 - `index.html`, `setup.cjs`, `preload.cjs`: connection UI and limited setup bridge.
 - `test/`: configuration regression tests and real Electron startup capture.

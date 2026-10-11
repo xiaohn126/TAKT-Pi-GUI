@@ -3,7 +3,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; script-src 'self'">
 <title>TAKT Pi GUI</title><style>
 body{background:#16181d;color:#eee;font:16px 'Segoe UI',sans-serif;margin:0;display:grid;place-items:center;min-height:100vh}main{width:560px;max-width:85vw}h1{font-size:32px}p{color:#aeb4c0;line-height:1.6}label{display:block;margin:20px 0 8px}input,select,button{box-sizing:border-box;font:inherit;border-radius:8px;padding:12px;border:1px solid #424854;background:#242830;color:#fff}input,select{width:100%}button{cursor:pointer;margin-top:16px}#connect{background:#5865dc;width:100%}#error{color:#ffaeae;white-space:pre-wrap}small{color:#aeb4c0}
-</style></head><body><main><h1>TAKT Pi GUI</h1><p>Windows 11 桌面版 · 0.2.0 · 2026-10-11<br>连接 pi-web，使用已有的会话、模型、文件和终端。</p>
+</style></head><body><main><h1>TAKT Pi GUI</h1><p>Windows 11 桌面版 · 0.3.0 · 2026-10-11<br>连接 pi-web，使用已有的会话、模型、文件和终端。</p>
 <label>连接方式</label><select id="mode"><option value="remote">远程 / 已运行的服务</option><option value="local">启动本机服务</option></select>
 <section id="remote"><label>服务地址</label><input id="url" value="http://127.0.0.1:30141"><p>连接后在服务登录页输入密码。远程服务建议使用 HTTPS。</p></section>
 <section id="local" hidden><label>已构建的 pi-web 目录</label><input id="directory"><button id="browse">选择目录</button><label>Node.js 程序</label><input id="node" value="node"><small>需要 Node.js 22.19+，支持填写 node.exe 的完整路径。</small></section>
