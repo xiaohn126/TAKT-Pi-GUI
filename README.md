@@ -60,6 +60,12 @@ Rows marked "no" use the server's official-provider code, which is unit-tested a
 
 ## Install
 
+### Windows 11
+
+A Windows desktop client is available in [windows/](windows/README.md), version 0.2.0 (2026-10-11). It uses the pi-web UI in an Electron desktop window, with remote and local-server modes. Build a portable `.exe` with `cd windows`, `npm ci`, then `npm run dist`; output is in `dist/windows`. Remote mode needs no separately installed Node.js. Local mode requires a built pi-web server and Node.js 22.19+.
+
+### macOS
+
 There are no signed releases yet; build from source.
 
 **Requirements:** macOS 15 or later, Xcode 16+ (Swift 6), Node 22.19+, and the `pi` CLI configured (`pi` on your `PATH`, models logged in).

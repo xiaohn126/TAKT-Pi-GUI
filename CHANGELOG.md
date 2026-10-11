@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.2.0 · 2026-10-11
+- Added Windows 11 Electron client, remote/local connection setup, server lifecycle, startup tests and portable x64 packaging. See `windows/README.md`.
+
 ## Unreleased
 - Docs: overview, architecture, feature parity, Codex UI spec, roadmap, pi-remote compatibility.
 
